@@ -20,13 +20,16 @@ This VS Code extension facilitates the management and integration of icons from 
   - Use `sc-async-iconfont.refresh` command to force an update from the API.
 - **Iconfont API**:
   - The extension relies on internal `iconfont.cn` APIs (e.g., `/api/user/myprojects.json`). These are subject to change.
-  - **Cookie Requirement**: A valid `iconfont.cookie` must be configured in VS Code settings for the extension to function.
+  - **Cookie Requirement**: A valid `iconfont.cookie` must be configured in VS Code settings or in `.iconfont.json` (priority: `.iconfont.json` > VS Code settings).
 
 ## Project Conventions
 
 - **Configuration**:
   - Supports both VS Code `User Settings` and a local `.iconfont.json` file in the project root.
   - `src/webview/iconfont.ts` -> `checkConfig` validates these settings.
+  - **Generated Files**:
+    - **Symbol Mode**: Generates `font_symbol_[hash].js`, `iconfont.js` (stable alias), and `iconfont.json` (metadata).
+    - **Font Class Mode**: Generates `iconfont.css`, font files (`iconfont.woff2`, etc.), and `iconfont.json` (metadata).
 - **Webview Communication**:
   - **Extension to Webview**: `webviewPanel.webview.postMessage({ type: '...', data: ... })`.
   - **Webview to Extension**: `webviewPanel.webview.onDidReceiveMessage`.

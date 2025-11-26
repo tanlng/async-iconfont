@@ -62,7 +62,8 @@ export class VueService {
   // 获取项目详情
   public async getIconProjectDetail(id: string) {
     const iconJsonState = this.context!.globalState.get('iconJsonState');
-    const cookie = vscode.workspace.getConfiguration().get('iconfont.cookie') as string;
+    // 优先使用 service 中已设置的 cookie (可能来自 .iconfont.json)，否则回退到配置
+    const cookie = this.cookie || vscode.workspace.getConfiguration().get('iconfont.cookie') as string;
     const [error, data] = await toAwait(
       this.request!.get(`/api/project/detail.json`, { params: { pid: id, t: new Date().getTime(), ctoken: getCookieConfig(cookie, 'ctoken') } })
     );
@@ -112,7 +113,7 @@ export class VueService {
   // symbol过期，重新生成symbol文件
   public async resetSymbolFile(id:string) {
     const url = '/api/project/cdn.json';
-    const cookie = vscode.workspace.getConfiguration().get('iconfont.cookie') as string;
+    const cookie = this.cookie || vscode.workspace.getConfiguration().get('iconfont.cookie') as string;
     const [error, data] = await toAwait(this.request!.post(url, { id, ctoken: getCookieConfig(cookie, 'ctoken'), t: new Date().getTime() }));
     if (error) {
       return true;
@@ -122,7 +123,7 @@ export class VueService {
   }
   // 搜索全局icon
   public async searchGlobalIcons(search?: any, refresh?: boolean): Promise<{icons:Icon[],pages:number}>{
-    const cookie = vscode.workspace.getConfiguration().get('iconfont.cookie') as string;
+    const cookie = this.cookie || vscode.workspace.getConfiguration().get('iconfont.cookie') as string;
     const { page = 1, pageSize = 54, fromCollection = 1, q = search.t||'', ctoken = getCookieConfig(cookie,'ctoken') } = search || {};
     const iconJsonState = this.context!.globalState.get('iconJsonState');
     let iconsData: any;
@@ -151,7 +152,7 @@ export class VueService {
   // 把icon添加到项目中
   public async insertIconToProject(pid: string | number, iconId: string | number) {
     const url = '/api/project/addIcons.json';
-    const cookie = vscode.workspace.getConfiguration().get('iconfont.cookie') as string;
+    const cookie = this.cookie || vscode.workspace.getConfiguration().get('iconfont.cookie') as string;
     const ctoken = getCookieConfig(cookie,'ctoken');
     const [error, data] = await toAwait(
       this.request!({
@@ -169,7 +170,7 @@ export class VueService {
   // 从项目中删除icon
   public async deleteIconFromProject(pid: string | number, iconId: string | number) {
     const url = '/api/icon/deleteProjectIcon.json';
-    const cookie = vscode.workspace.getConfiguration().get('iconfont.cookie') as string;
+    const cookie = this.cookie || vscode.workspace.getConfiguration().get('iconfont.cookie') as string;
     const ctoken = getCookieConfig(cookie,'ctoken');
     const [error, data] = await toAwait(
       this.request!({

@@ -28,5 +28,6 @@ export interface ConfigType{
   transionFontClassDir: string;
   transionSymbolJsDir: string;
   symbolJsWiteTemplateDir: string;
+  cookie?: string;
   active?:boolean
 }

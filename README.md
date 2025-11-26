@@ -50,6 +50,7 @@ sc-async-iconfont插件的目的，主要是为了更便捷使用 [iconfont](htt
 ```
 .iconfont.json 配置示例
 {
+	"cookie": "xxx", // iconfont官网cookie，可选，优先级高于vscode配置
 	"transionMethod":"svg|symbol|font-class",		// 插件使用方式
 	"transionSvgDir":"src/assets/icons",	// svg方式传输icons到项目中指定的文件夹
 	"transionSymbolJsDir":"src/assets/",	// symbol方式传输js文件到指定的文件夹
@@ -129,31 +130,6 @@ sc-async-iconfont插件的目的，主要是为了更便捷使用 [iconfont](htt
    # 发布插件
    vsce publish
    ```
-
-### 方法二：手动打包（兼容性方案）
-
-如果vsce工具有兼容性问题，可以使用手动打包：
-
-1. **编译插件**
-   ```bash
-   # Windows
-   npm run compile:win
-   
-   # 打包并压缩
-   npm run esbuild-base -- --minify
-   ```
-
-2. **创建.vsix文件**
-   ```bash
-   # Windows PowerShell
-   powershell -Command "Compress-Archive -Path 'package.json','README.md','CHANGELOG.md','LICENSE','iconfont.webp','out' -DestinationPath 'sc-async-iconfont-0.0.3.zip' -Force"
-   ren sc-async-iconfont-0.0.3.zip sc-async-iconfont-0.0.3.vsix
-   ```
-
-3. **通过Web界面上传**
-   - 访问 [Visual Studio Marketplace](https://marketplace.visualstudio.com/manage)
-   - 创建发布者账号
-   - 上传.vsix文件
 
 ## 发布流程
 

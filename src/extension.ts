@@ -7,7 +7,28 @@ import { VueIconfontHelper } from './webview/iconfont';
 import * as fs from 'fs';
 import * as path from 'path';
 export function activate(context: vscode.ExtensionContext) {
-	const cookie = vscode.workspace.getConfiguration().get('iconfont.cookie') as string;
+	// 尝试从工作区根目录的 .iconfont.json 读取 cookie
+	let cookie = '';
+	const workspaceFolders = vscode.workspace.workspaceFolders;
+	if (workspaceFolders && workspaceFolders.length > 0) {
+		const configPath = path.join(workspaceFolders[0].uri.fsPath, '.iconfont.json');
+		if (fs.existsSync(configPath)) {
+			try {
+				const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+				if (config.cookie) {
+					cookie = config.cookie;
+				}
+			} catch (e) {
+				console.error('读取 .iconfont.json 失败', e);
+			}
+		}
+	}
+
+	// 如果没有找到，则使用 VS Code 配置
+	if (!cookie) {
+		cookie = vscode.workspace.getConfiguration().get('iconfont.cookie') as string;
+	}
+
 	if (!cookie) {
 		vscode.window.showErrorMessage('请先登录iconfont官网获取并配置cookie');
 		return;
