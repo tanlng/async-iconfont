@@ -56,3 +56,196 @@ async-iconfont插件的目的，主要是为了更便捷使用 [iconfont](https:
 	"symbolJsWiteTemplateDir":"template/index.html"		// 把symbol js文件插入到html模版中
 }
 ```
+
+# 开发与打包
+
+## 环境要求
+
+- Node.js 22+
+- npm 或 yarn
+- TypeScript
+
+## 开发环境设置
+
+1. **克隆项目**
+   ```bash
+   git clone https://github.com/forever-chen/async-iconfont.git
+   cd async-iconfont
+   ```
+
+2. **安装依赖**
+   ```bash
+   npm install
+   ```
+
+3. **开发模式**
+   ```bash
+   # 监听TypeScript变化并自动编译
+   npm run watch
+   
+   # 或者使用esbuild监听模式
+   npm run esbuild-watch
+   ```
+
+4. **调试插件**
+   - 在VSCode中按 `F5` 启动调试
+   - 选择 "Run Extension" 配置
+   - 这会打开一个新的VSCode窗口用于测试插件
+
+## 打包发布
+
+### 方法一：使用vsce工具（推荐）
+
+1. **安装vsce**
+   ```bash
+   npm install -g @vscode/vsce
+   ```
+
+2. **编译插件**
+   ```bash
+   # Windows
+   npm run compile:win
+   
+   # Linux/Mac
+   npm run compile
+   ```
+
+3. **打包插件**
+   ```bash
+   npm run esbuild-base -- --minify
+   ```
+
+4. **创建发布包**
+   ```bash
+   vsce package
+   ```
+
+5. **发布到市场**
+   ```bash
+   # 登录发布者账号
+   vsce login forever-chen
+   
+   # 发布插件
+   vsce publish
+   ```
+
+### 方法二：手动打包（兼容性方案）
+
+如果vsce工具有兼容性问题，可以使用手动打包：
+
+1. **编译插件**
+   ```bash
+   # Windows
+   npm run compile:win
+   
+   # 打包并压缩
+   npm run esbuild-base -- --minify
+   ```
+
+2. **创建.vsix文件**
+   ```bash
+   # Windows PowerShell
+   powershell -Command "Compress-Archive -Path 'package.json','README.md','CHANGELOG.md','LICENSE','iconfont.webp','out' -DestinationPath 'async-iconfont-0.0.3.zip' -Force"
+   ren async-iconfont-0.0.3.zip async-iconfont-0.0.3.vsix
+   ```
+
+3. **通过Web界面上传**
+   - 访问 [Visual Studio Marketplace](https://marketplace.visualstudio.com/manage)
+   - 创建发布者账号
+   - 上传.vsix文件
+
+## 发布流程
+
+### 1. 创建Azure DevOps发布者账号
+
+1. 访问 [Azure DevOps](https://dev.azure.com/)
+2. 使用Microsoft账号登录
+3. 创建新组织（如果还没有）
+4. 创建个人访问令牌：
+   - 点击右上角头像 → "Personal access tokens"
+   - 点击 "New Token"
+   - 设置名称和过期时间
+   - 范围选择 "Custom defined"
+   - 勾选 "Marketplace" → "Manage" 权限
+   - 复制并保存令牌
+
+### 2. 发布插件
+
+#### 使用vsce命令行（推荐）
+```bash
+# 登录
+vsce login forever-chen
+
+# 发布
+vsce publish
+```
+
+#### 使用Web界面
+1. 访问 [Visual Studio Marketplace](https://marketplace.visualstudio.com/manage)
+2. 创建发布者账号
+3. 上传.vsix文件
+4. 填写插件信息
+5. 发布
+
+## 版本管理
+
+每次发布前需要更新版本号：
+
+1. **修改package.json中的版本号**
+   ```json
+   {
+     "version": "0.0.4"  // 增加版本号
+   }
+   ```
+
+2. **更新CHANGELOG.md**
+   ```markdown
+   ## [0.0.4] - 2024-01-01
+   - 新增功能
+   - 修复bug
+   ```
+
+3. **重新打包发布**
+
+## 常用命令
+
+```bash
+# 开发相关
+npm run watch          # TypeScript监听模式
+npm run esbuild-watch  # esbuild监听模式
+npm run lint           # 代码检查
+npm test              # 运行测试
+
+# 打包相关
+npm run compile:win    # Windows编译
+npm run compile        # Linux/Mac编译
+npm run esbuild        # 开发版本打包
+npm run esbuild-base -- --minify  # 生产版本打包
+
+# 发布相关
+vsce package          # 打包为.vsix
+vsce publish          # 发布到市场
+vsce publish patch    # 发布补丁版本
+vsce publish minor    # 发布次要版本
+vsce publish major    # 发布主要版本
+```
+
+## 故障排除
+
+### vsce工具问题
+如果遇到vsce兼容性问题：
+- 确保Node.js版本 >= 18
+- 尝试安装特定版本：`npm install -g @vscode/vsce@2.15.0`
+- 使用手动打包方式
+
+### 编译问题
+如果编译失败：
+- 检查TypeScript配置
+- 确保所有依赖已安装
+- 检查文件路径是否正确
+
+### 发布问题
+如果发布失败：
+- 检查网络连接
+- 验证发布者令牌
+- 确认版本号已更新
