@@ -25,7 +25,7 @@ class ListItem extends vscode.TreeItem {
 	) {
 		super(label);
 		this.command = {
-			command: 'async-iconfont.click',
+			command: 'sc-async-iconfont.click',
 			title: 'Click',
 			arguments: [this]
 		};

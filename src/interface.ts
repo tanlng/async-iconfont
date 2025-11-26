@@ -25,6 +25,7 @@ export interface ConfigType{
   projectName: string;
   transionMethod: string;
   transionSvgDir: string;
+  transionFontClassDir: string;
   transionSymbolJsDir: string;
   symbolJsWiteTemplateDir: string;
   active?:boolean

@@ -1,8 +1,8 @@
-# async-iconfont
+# sc-async-iconfont
 
 # 插件功能简述
 
-async-iconfont插件的目的，主要是为了更便捷使用 [iconfont](https://www.iconfont.cn/) 中的项目图标。插件的功能主要包括：
+sc-async-iconfont插件的目的，主要是为了更便捷使用 [iconfont](https://www.iconfont.cn/) 中的项目图标。插件的功能主要包括：
 
 1. 展示iconfont的项目图标仓库，并且可以删除、添加和搜索项目中的图标;
 2. 可搜索iconfont的所有图标，并且添加至iconfont项目中;
@@ -50,9 +50,10 @@ async-iconfont插件的目的，主要是为了更便捷使用 [iconfont](https:
 ```
 .iconfont.json 配置示例
 {
-	"transionMethod":"svg|symbol",		// 插件使用方式
+	"transionMethod":"svg|symbol|font-class",		// 插件使用方式
 	"transionSvgDir":"src/assets/icons",	// svg方式传输icons到项目中指定的文件夹
 	"transionSymbolJsDir":"src/assets/",	// symbol方式传输js文件到指定的文件夹
+	"transionFontClassDir":"src/assets/fonts",	// font-class方式传输css和字体文件到指定的文件夹
 	"symbolJsWiteTemplateDir":"template/index.html"		// 把symbol js文件插入到html模版中
 }
 ```
@@ -145,8 +146,8 @@ async-iconfont插件的目的，主要是为了更便捷使用 [iconfont](https:
 2. **创建.vsix文件**
    ```bash
    # Windows PowerShell
-   powershell -Command "Compress-Archive -Path 'package.json','README.md','CHANGELOG.md','LICENSE','iconfont.webp','out' -DestinationPath 'async-iconfont-0.0.3.zip' -Force"
-   ren async-iconfont-0.0.3.zip async-iconfont-0.0.3.vsix
+   powershell -Command "Compress-Archive -Path 'package.json','README.md','CHANGELOG.md','LICENSE','iconfont.webp','out' -DestinationPath 'sc-async-iconfont-0.0.3.zip' -Force"
+   ren sc-async-iconfont-0.0.3.zip sc-async-iconfont-0.0.3.vsix
    ```
 
 3. **通过Web界面上传**

@@ -96,13 +96,18 @@ export class VueIconfontHelper {
       window.showErrorMessage('请先配置传输类型和传输路径。');
       return false;
     }
-    if (!['svg', 'symbol'].includes(info.transionMethod)) {
-      window.showErrorMessage('传输方式配置不正确，只能是svg或者symbol，请检查：transionMethod');
+    if (!['svg', 'symbol', 'font-class'].includes(info.transionMethod)) {
+      window.showErrorMessage('传输方式配置不正确，只能是svg、symbol或font-class，请检查：transionMethod');
       return false;
     }
     if (info.transionMethod === 'svg' || activeType) {
       if (!fs.existsSync(info.transionSvgDir)) {
         window.showErrorMessage('icons传输路径不存在，请检查传输地址配置：transionSvgDir');
+        return false;
+      }
+    } else if (info.transionMethod === 'font-class') {
+      if (!fs.existsSync(info.transionFontClassDir)) {
+        window.showErrorMessage('font-class传输路径不存在，请检查传输地址配置：transionFontClassDir');
         return false;
       }
     } else {
@@ -163,7 +168,14 @@ export class VueIconfontHelper {
       } catch (e) {
         window.showErrorMessage(`font.js文件写入模版文件失败`);
       }
-    } 
+    } else if (activeProjectConfig?.transionMethod === 'font-class') {
+      try {
+        await this.downloadFontClass(activeProjectConfig.transionFontClassDir);
+        window.showInformationMessage(`传输完成`);
+      } catch (e) {
+        window.showErrorMessage(`font-class文件传输失败: ${e}`);
+      }
+    }
   }
 
   private async getFileAndWrite(icons: any[], targetDir: string) {
@@ -186,6 +198,7 @@ export class VueIconfontHelper {
       projectUrl:'',
       transionMethod: getConfig.get('transionMethod') || 'svg',
       transionSvgDir: String(getConfig.get('transionSvgDir')).replace('\\', '/') || '',
+      transionFontClassDir: String(getConfig.get('transionFontClassDir')).replace('\\', '/') || '',
       transionSymbolJsDir: String( getConfig.get('transionSymbolJsDir')).replace('\\', '/') || '',
       symbolJsWiteTemplateDir: String(getConfig.get('symbolJsWiteTemplateDir')).replace('\\', '/') || 'false',
       projectName: ''
@@ -214,6 +227,7 @@ export class VueIconfontHelper {
       realConfig.projectUrl = item.uri.fsPath
       realConfig.projectName = splitStr.slice(-1)[0];
       realConfig.transionSvgDir = path.join(item.uri.fsPath, realConfig.transionSvgDir) ;
+      realConfig.transionFontClassDir = path.join(item.uri.fsPath, realConfig.transionFontClassDir);
       realConfig.transionSymbolJsDir = path.join(item.uri.fsPath, realConfig.transionSymbolJsDir);
       realConfig.symbolJsWiteTemplateDir = path.join(item.uri.fsPath, realConfig.symbolJsWiteTemplateDir);
       this.workspaceList.push(realConfig);
@@ -260,6 +274,58 @@ export class VueIconfontHelper {
           item.active = item.projectName === String(data) ? true : false;
           return item;
         });
+    }
+  }
+
+  private async downloadFontClass(targetDir: string) {
+    const projectDetail = await vueService.getIconProjectDetail(this.currentActiveProject);
+    // 尝试获取CSS链接
+    let cssUrl = projectDetail?.font?.css_file;
+    if (!cssUrl && projectDetail?.project?.font_resource) {
+        cssUrl = projectDetail.project.font_resource;
+    }
+    
+    if (!cssUrl) {
+        window.showErrorMessage('无法找到项目的CSS文件链接，请确认项目是否生成了Font Class代码。');
+        return;
+    }
+
+    // 下载CSS
+    let cssContentBuffer = await vueService.downloadFile(cssUrl);
+    let cssContent = cssContentBuffer.toString('utf8');
+
+    // 解析并下载字体文件
+    const fontRegex = /url\('(.+?)(\?.*?)?'\)/g;
+    const fontFiles = new Set<string>();
+    
+    // 替换CSS中的路径为相对路径
+    let newCssContent = cssContent.replace(fontRegex, (fullMatch: string, url: string, query: string) => {
+        let downloadUrl = url;
+        if (downloadUrl.startsWith('//')) {
+            downloadUrl = 'https:' + downloadUrl;
+        }
+        
+        const fileName = path.basename(url);
+        fontFiles.add(downloadUrl);
+        
+        return `url('${fileName}${query || ''}')`;
+    });
+
+    // 写入CSS文件
+    if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+    }
+    fs.writeFileSync(path.join(targetDir, 'iconfont.css'), newCssContent);
+
+    // 下载并写入字体文件
+    for (const fileUrl of fontFiles) {
+        try {
+            const fileContent = await vueService.downloadFile(fileUrl);
+            const fileName = path.basename(fileUrl);
+            fs.writeFileSync(path.join(targetDir, fileName), fileContent);
+        } catch (e) {
+            console.error(`下载字体文件失败: ${fileUrl}`, e);
+        }
     }
   }
 }

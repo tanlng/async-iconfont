@@ -17,17 +17,17 @@ export function activate(context: vscode.ExtensionContext) {
 	vueService.setContext(context);
 	const siderInstance = new SideBar.ListDataProvider();
 	// 创建菜单项
-	vscode.window.createTreeView('async-iconfont', {
+	vscode.window.createTreeView('sc-async-iconfont', {
 		treeDataProvider: siderInstance
 	});
 	const iconfontHelper = new VueIconfontHelper(context);
 	// 监听菜单项点击事件
-	context.subscriptions.push(vscode.commands.registerCommand('async-iconfont.click', async ({ label }) => {
+	context.subscriptions.push(vscode.commands.registerCommand('sc-async-iconfont.click', async ({ label }) => {
 		iconfontHelper.start(label.id);
 		vscode.window.showInformationMessage(`You clicked ${ label.label }`);
 	}));
 	// 全量更新icons
-	context.subscriptions.push(vscode.commands.registerCommand('async-iconfont.refresh', () => {
+	context.subscriptions.push(vscode.commands.registerCommand('sc-async-iconfont.refresh', () => {
 		iconfontHelper.updateOperation();
 		setTimeout(() => {
 			siderInstance.refresh();

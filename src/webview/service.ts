@@ -184,6 +184,19 @@ export class VueService {
       window.showErrorMessage('删除失败!');
     }
   }
+  // 下载文件
+  public async downloadFile(url: string): Promise<any> {
+    if (url.startsWith('//')) {
+      url = 'https:' + url;
+    }
+    try {
+      const response = await this.request!.get(url, { responseType: 'arraybuffer' });
+      return response.data;
+    } catch (error) {
+      window.showErrorMessage(`下载文件失败: ${url}`);
+      throw error;
+    }
+  }
 }
 
 export const vueService = new VueService();

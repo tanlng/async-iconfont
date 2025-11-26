@@ -1,10 +1,10 @@
 {
-	"name": "async-iconfont",
-	"displayName": "async-iconfont",
+	"name": "sc-async-iconfont",
+	"displayName": "sc-async-iconfont",
 	"description": "使用插件一键传输iconfont官网icon到项目中",
 	"version": "0.0.3",
 	"engines": {
-		"vscode": "^1.77.0"
+		"vscode": "^1.90.0"
 	},
 	"publisher": "forever-chen",
 	"categories": [
@@ -24,9 +24,17 @@
 	"activationEvents": [],
 	"main": "./out/extension.js",
 	"contributes": {
+		"chatParticipants": [
+			{
+				"id": "claude-code",
+				"name": "claude-code",
+				"description": "Claude Code Assistant",
+				"isSticky": true
+			}
+		],
 		"commands": [
 			{
-				"command": "async-iconfont.refresh",
+				"command": "sc-async-iconfont.refresh",
 				"title": "从iconfont官网全量同步icons",
 				"icon": {
 					"light": "out/src/html/refresh.svg",
@@ -37,8 +45,8 @@
 		"menus": {
 			"view/title": [
 				{
-					"command": "async-iconfont.refresh",
-					"when": "view == async-iconfont",
+					"command": "sc-async-iconfont.refresh",
+					"when": "view == sc-async-iconfont",
 					"group": "navigation"
 				}
 			]
@@ -46,20 +54,20 @@
 		"views": {
 			"explorer": [
 				{
-					"id": "async-iconfont",
-					"name": "async-iconfont"
+					"id": "sc-async-iconfont",
+					"name": "sc-async-iconfont"
 				}
 			]
 		},
 		"viewsWelcome": [
 			{
-				"view": "async-iconfont",
+				"view": "sc-async-iconfont",
 				"contents": "正在加载项目列表……请稍等"
 			}
 		],
 		"configuration": [
 			{
-				"title": "async-iconfont",
+				"title": "sc-async-iconfont",
 				"properties": {
 					"iconfont.cookie": {
 						"type": "string",
@@ -69,15 +77,21 @@
 						"type": "string",
 						"enum": [
 							"svg",
-							"symbol"
+							"symbol",
+							"font-class"
 						],
 						"default": "svg",
-						"description": "icons 传输到本地的方式，有svg文件的形式、symbol的形式。"
+						"description": "icons 传输到本地的方式，有svg文件的形式、symbol的形式、font-class的形式。"
 					},
 					"iconfont.transionSvgDir": {
 						"type": "string",
 						"description": "传输svg文件到项目中的位置。",
 						"default": "src/assets/icons"
+					},
+					"iconfont.transionFontClassDir": {
+						"type": "string",
+						"description": "传输font-class文件(css和字体文件)到项目中的位置。",
+						"default": "src/assets/fonts"
 					},
 					"iconfont.transionSymbolJsDir": {
 						"type": "string",
@@ -115,7 +129,7 @@
 		"@types/prettier": "^2.7.2",
 		"@types/react": "^18.0.34",
 		"@types/react-dom": "^18.0.11",
-		"@types/vscode": "^1.77.0",
+		"@types/vscode": "^1.90.0",
 		"@typescript-eslint/eslint-plugin": "^5.12.1",
 		"@typescript-eslint/parser": "^5.12.1",
 		"@vscode/test-electron": "^2.1.2",

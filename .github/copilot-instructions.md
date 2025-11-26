@@ -1,4 +1,4 @@
-# Async Iconfont Copilot Instructions
+# Hz Async Iconfont Copilot Instructions
 
 ## Architecture Overview
 
@@ -17,7 +17,7 @@ This VS Code extension facilitates the management and integration of icons from 
   - **Important**: When modifying `src/html/`, ensure the build script is run or the `out/src/html` folder is updated, as the extension loads HTML from `out`.
 - **Data Caching**:
   - Project lists and icon details are cached in `context.globalState` (`projectInfoState`, `iconJsonState`).
-  - Use `async-iconfont.refresh` command to force an update from the API.
+  - Use `sc-async-iconfont.refresh` command to force an update from the API.
 - **Iconfont API**:
   - The extension relies on internal `iconfont.cn` APIs (e.g., `/api/user/myprojects.json`). These are subject to change.
   - **Cookie Requirement**: A valid `iconfont.cookie` must be configured in VS Code settings for the extension to function.

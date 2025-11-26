@@ -1,6 +1,4 @@
 {
-	"transionMethod":"svg|symbol",
-	"transionSvgDir":"src/assets/icons",
-	"transionSymbolJsDir":"src/assets/",
-	"symbolJsWiteTemplateDir":"template/index.html"
+  "transionMethod": "font-class",
+  "transionFontClassDir": "src/icons/iconfonts"
 }
