@@ -106,9 +106,11 @@ sc-async-iconfont插件的目的，主要是为了更便捷使用 [iconfont](htt
 2. **编译插件**
    ```bash
    # Windows
+   npm version patch
    npm run compile:win
    
    # Linux/Mac
+   npm version patch
    npm run compile
    ```
 
