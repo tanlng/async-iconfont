@@ -296,7 +296,7 @@ export class VueIconfontHelper {
 
     // 解析并下载字体文件
     const fontRegex = /url\('(.+?)(\?.*?)?'\)/g;
-    const fontFiles = new Set<string>();
+    const fontFiles = new Map<string, string>();
     
     // 替换CSS中的路径为相对路径
     let newCssContent = cssContent.replace(fontRegex, (fullMatch: string, url: string, query: string) => {
@@ -305,8 +305,9 @@ export class VueIconfontHelper {
             downloadUrl = 'https:' + downloadUrl;
         }
         
-        const fileName = path.basename(url);
-        fontFiles.add(downloadUrl);
+        const ext = path.extname(url);
+        const fileName = `iconfont${ext}`;
+        fontFiles.set(downloadUrl, fileName);
         
         return `url('${fileName}${query || ''}')`;
     });
@@ -318,10 +319,9 @@ export class VueIconfontHelper {
     fs.writeFileSync(path.join(targetDir, 'iconfont.css'), newCssContent);
 
     // 下载并写入字体文件
-    for (const fileUrl of fontFiles) {
+    for (const [fileUrl, fileName] of fontFiles) {
         try {
             const fileContent = await vueService.downloadFile(fileUrl);
-            const fileName = path.basename(fileUrl);
             fs.writeFileSync(path.join(targetDir, fileName), fileContent);
         } catch (e) {
             console.error(`下载字体文件失败: ${fileUrl}`, e);
