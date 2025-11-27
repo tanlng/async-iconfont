@@ -353,6 +353,17 @@ export class VueIconfontHelper {
         }
     }
 
+    // 下载 JS 文件
+    let jsUrl = projectDetail?.font?.js_file;
+    if (jsUrl) {
+        try {
+            const jsContent = await vueService.downloadFile(jsUrl);
+            fs.writeFileSync(path.join(targetDir, 'iconfont.js'), jsContent);
+        } catch (e) {
+            console.error(`下载 JS 文件失败: ${jsUrl}`, e);
+        }
+    }
+
     // 写入 font-class 模式的元信息到 iconfont.json（包含字体文件列表与时间戳）
     try {
       const meta = {

@@ -190,6 +190,7 @@ export class VueService {
     if (url.startsWith('//')) {
       url = 'https:' + url;
     }
+    console.log(`正在下载: ${url}`);
     try {
       const response = await this.request!.get(url, { responseType: 'arraybuffer' });
       return response.data;
