@@ -1,38 +1,54 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { ExtensionContext, Position, Range, Uri, ViewColumn, WebviewPanel, window, workspace } from 'vscode';
-import * as crypto from 'crypto';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as os from 'os';
-import { getIndexHtml, getLoadingHtml } from '../utils';
-import { vueService } from './service';
-import { EventData, EventMessage, Icon, ConfigType } from '../interface';
-const system = os.platform().indexOf('win32') > -1 ? 'win' : 'other';
+import {
+  ExtensionContext,
+  Position,
+  Range,
+  Uri,
+  ViewColumn,
+  WebviewPanel,
+  window,
+  workspace,
+} from "vscode";
+import * as crypto from "crypto";
+import * as path from "path";
+import * as fs from "fs";
+import * as os from "os";
+import * as AdmZip from "adm-zip";
+import { getIndexHtml, getLoadingHtml, getCookieConfig } from "../utils";
+import { vueService } from "./service";
+import { EventData, EventMessage, Icon, ConfigType } from "../interface";
+import { ConfigurationManager } from "../configuration";
+const system = os.platform().indexOf("win32") > -1 ? "win" : "other";
 
 export class VueIconfontHelper {
   webviewPanel: WebviewPanel | undefined;
   context: ExtensionContext;
-  localIcons: Icon[] = [];  // 项目icons
-  searchIcons:Icon[] =[];  // 全局搜索icons
+  localIcons: Icon[] = []; // 项目icons
+  searchIcons: Icon[] = []; // 全局搜索icons
   projectRootPath: string | undefined; // 第一个项目根目录
-  iconsDirPath: string | undefined;  // icons传输完整目录
+  iconsDirPath: string | undefined; // icons传输完整目录
   currentTextDocumentFileUri: Uri | undefined; // 当前光标所在工作空间文件
-  dirPath: string;   // icons传输配置目录
+  dirPath: string; // icons传输配置目录
   currentActiveProject: string; // 保存当前激活的iconfont项目id
-  workspaceList: ConfigType[] = [];  // 工作空间list
+  workspaceList: ConfigType[] = []; // 工作空间list
   constructor(context: ExtensionContext) {
     this.context = context;
     this.localIcons = [];
     this.searchIcons = [];
-    this.dirPath = workspace.getConfiguration().get('iconfont.dirPath') as string || '/src/assets/icons';
+    this.dirPath =
+      (workspace.getConfiguration().get("iconfont.dirPath") as string) ||
+      "/src/assets/icons";
     this.currentTextDocumentFileUri = window.activeTextEditor?.document.uri;
-    this.currentActiveProject = '';
+    this.currentActiveProject = "";
     this.getLatestAddress();
     console.log(workspace.getConfiguration());
   }
   private getLatestAddress() {
     this.projectRootPath = workspace.workspaceFolders?.[0]?.uri?.fsPath;
-    this.iconsDirPath = path.join(this.projectRootPath || '', `./${ this.dirPath }`);
+    this.iconsDirPath = path.join(
+      this.projectRootPath || "",
+      `./${this.dirPath}`
+    );
   }
   public async start(projecId: string): Promise<void> {
     // if (!this.projectRootPath) {
@@ -43,12 +59,7 @@ export class VueIconfontHelper {
     this.openWebview(getLoadingHtml(this.context)); // 先打开loading
     this.localIcons = await vueService.getProjectIcons(projecId); // 获取项目icons
     this.currentActiveProject = projecId;
-    this.openWebview(
-      getIndexHtml(
-        this.context,
-        this.webviewPanel,
-      )
-    );
+    this.openWebview(getIndexHtml(this.context, this.webviewPanel));
   }
   // 打开webview
   private openWebview(html: string) {
@@ -58,16 +69,18 @@ export class VueIconfontHelper {
 
     if (!this.webviewPanel) {
       this.webviewPanel = window.createWebviewPanel(
-        'iconfont',
+        "iconfont",
         "iconfont助手",
         columnToShowIn || ViewColumn.Active,
         {
           retainContextWhenHidden: true,
-          enableScripts: true
+          enableScripts: true,
         }
       );
 
-      this.webviewPanel.webview.onDidReceiveMessage((e) => this.didReceiveMessage(e));
+      this.webviewPanel.webview.onDidReceiveMessage(e =>
+        this.didReceiveMessage(e)
+      );
       this.webviewPanel.onDidDispose(() => {
         this.webviewPanel = undefined;
       });
@@ -77,7 +90,10 @@ export class VueIconfontHelper {
     this.webviewPanel.webview.html = html;
     if (this.localIcons) {
       setTimeout(() => {
-        this.webviewPanel?.webview?.postMessage({type:'projectIcons',data:this.localIcons});
+        this.webviewPanel?.webview?.postMessage({
+          type: "projectIcons",
+          data: this.localIcons,
+        });
       });
     }
   }
@@ -90,85 +106,118 @@ export class VueIconfontHelper {
     });
   }
   // 检查配置信息是否完整正确
-  private checkConfig(info: ConfigType | undefined,activeType?:string) {
-    console.log(4444,info)
+  private checkConfig(info: ConfigType | undefined, activeType?: string) {
+    console.log("检查配置", info);
     if (!info) {
-      window.showErrorMessage('请先配置传输类型和传输路径。');
+      window.showErrorMessage("请先配置传输类型和传输路径。");
       return false;
     }
-    if (!['svg', 'symbol', 'font-class'].includes(info.transionMethod)) {
-      window.showErrorMessage('传输方式配置不正确，只能是svg、symbol或font-class，请检查：transionMethod');
+    if (!["svg", "symbol", "font-class"].includes(info.transionMethod)) {
+      window.showErrorMessage(
+        "传输方式配置不正确，只能是svg、symbol或font-class，请检查：transionMethod"
+      );
       return false;
     }
-    if (info.transionMethod === 'svg' || activeType) {
+    if (info.transionMethod === "svg" || activeType) {
       if (!fs.existsSync(info.transionSvgDir)) {
-        window.showErrorMessage('icons传输路径不存在，请检查传输地址配置：transionSvgDir');
+        window.showErrorMessage(
+          "icons传输路径不存在，请检查传输地址配置：transionSvgDir"
+        );
         return false;
       }
-    } else if (info.transionMethod === 'font-class') {
+    } else if (info.transionMethod === "font-class") {
       if (!fs.existsSync(info.transionFontClassDir)) {
-        window.showErrorMessage('font-class传输路径不存在，请检查传输地址配置：transionFontClassDir');
+        window.showErrorMessage(
+          "font-class传输路径不存在，请检查传输地址配置：transionFontClassDir"
+        );
         return false;
       }
     } else {
       if (!fs.existsSync(info.transionSymbolJsDir)) {
-        window.showErrorMessage('symbol js文件传输路径不存在，请检查symbol传输地址配置：transionSymbolJsDir');
+        window.showErrorMessage(
+          "symbol js文件传输路径不存在，请检查symbol传输地址配置：transionSymbolJsDir"
+        );
         return false;
       }
-      if (!info.symbolJsWiteTemplateDir.endsWith('false')&&!fs.existsSync(info.symbolJsWiteTemplateDir)) {
-        window.showErrorMessage('symbol js文件插入模版路径不存在，请检查配置：symbolJsWiteTemplateDir');
+      if (
+        !info.symbolJsWiteTemplateDir.endsWith("false") &&
+        !fs.existsSync(info.symbolJsWiteTemplateDir)
+      ) {
+        window.showErrorMessage(
+          "symbol js文件插入模版路径不存在，请检查配置：symbolJsWiteTemplateDir"
+        );
         return false;
       }
     }
-    return true
+    return true;
   }
   // 传输项目icons或者单个到项目中
-  public async transionIconsToProject(iconfInfo?:{type:string,id:string}) {
+  public async transionIconsToProject(iconfInfo?: {
+    type: string;
+    id: string;
+  }) {
     this.generateWorkSpaceList();
     const activeProjectConfig = this.workspaceList.find(item => item.active);
     if (!this.checkConfig(activeProjectConfig, iconfInfo?.type)) {
       return;
     }
-    if (activeProjectConfig?.transionMethod === 'svg' || iconfInfo) {
-      let transitionIcons = []
-      const publicUrl = `${ activeProjectConfig?.transionSvgDir }/`
+    if (activeProjectConfig?.transionMethod === "svg" || iconfInfo) {
+      let transitionIcons = [];
+      const publicUrl = `${activeProjectConfig?.transionSvgDir}/`;
       if (iconfInfo) {
         let showSvgInfo;
-        if (iconfInfo.type === 'projectIcons') {
-          showSvgInfo = this.localIcons.find(i => i.id === iconfInfo.id)
+        if (iconfInfo.type === "projectIcons") {
+          showSvgInfo = this.localIcons.find(i => i.id === iconfInfo.id);
         } else {
-          showSvgInfo = this.searchIcons.find(i => i.id === iconfInfo.id)
+          showSvgInfo = this.searchIcons.find(i => i.id === iconfInfo.id);
         }
-        transitionIcons = [showSvgInfo]
+        transitionIcons = [showSvgInfo];
       } else {
-        transitionIcons = await vueService.getProjectIcons(this.currentActiveProject)
+        transitionIcons = await vueService.getProjectIcons(
+          this.currentActiveProject
+        );
       }
       transitionIcons.map((item: Icon | undefined) => {
-        if (!item){ return;}
-        let iconPath = publicUrl + item.fontClass
+        if (!item) {
+          return;
+        }
+        let iconPath = publicUrl + item.fontClass;
         try {
-          fs.accessSync(iconPath+'.svg', fs.constants.F_OK);
-          fs.writeFileSync(`${ iconPath }_${item.id}.svg`, item.showSvg);
+          fs.accessSync(iconPath + ".svg", fs.constants.F_OK);
+          fs.writeFileSync(`${iconPath}_${item.id}.svg`, item.showSvg);
         } catch (err) {
-          fs.writeFileSync(`${ iconPath }.svg`, item.showSvg);
+          fs.writeFileSync(`${iconPath}.svg`, item.showSvg);
         }
       });
       window.showInformationMessage(`传输完成`);
-    } else if (activeProjectConfig?.transionMethod === 'symbol'){
-      const currentProjectIconsInfo = await vueService.getProjectIcons(this.currentActiveProject);
-      const fileName = await this.getFileAndWrite(currentProjectIconsInfo, activeProjectConfig.transionSymbolJsDir);
+    } else if (activeProjectConfig?.transionMethod === "symbol") {
+      const currentProjectIconsInfo = await vueService.getProjectIcons(
+        this.currentActiveProject
+      );
+      const fileName = await this.getFileAndWrite(
+        currentProjectIconsInfo,
+        activeProjectConfig.transionSymbolJsDir
+      );
       // 写html
       try {
-        if (!activeProjectConfig.symbolJsWiteTemplateDir.endsWith('false')) {
-          const html = fs.readFileSync(activeProjectConfig.symbolJsWiteTemplateDir, 'utf8');
-          const str = `<script id="fontFile" src="${ fileName }"></script></head>`;
-          fs.writeFileSync(activeProjectConfig.symbolJsWiteTemplateDir, html.replace(/<script id\=\"fontFile\"(.*?)<\/script>/g, '').replace('<\/head>', str));
+        if (!activeProjectConfig.symbolJsWiteTemplateDir.endsWith("false")) {
+          const html = fs.readFileSync(
+            activeProjectConfig.symbolJsWiteTemplateDir,
+            "utf8"
+          );
+          const str = `<script id="fontFile" src="${fileName}"></script></head>`;
+          fs.writeFileSync(
+            activeProjectConfig.symbolJsWiteTemplateDir,
+            html
+              .replace(/<script id\=\"fontFile\"(.*?)<\/script>/g, "")
+              .replace("</head>", str)
+          );
         }
         window.showInformationMessage(`传输完成`);
       } catch (e) {
         window.showErrorMessage(`font.js文件写入模版文件失败`);
       }
-    } else if (activeProjectConfig?.transionMethod === 'font-class') {
+    } else if (activeProjectConfig?.transionMethod === "font-class") {
       try {
         await this.downloadFontClass(activeProjectConfig.transionFontClassDir);
         window.showInformationMessage(`传输完成`);
@@ -179,66 +228,66 @@ export class VueIconfontHelper {
   }
 
   private async getFileAndWrite(icons: any[], targetDir: string) {
-    const svgStr = icons.map(icon => `<symbol id="${icon.fontClass}" viewBox="0 0 1024 1024">` + icon.showSvg.replace(/<svg.*?>|<\/svg>/g, '') + '</symbol>').join('');
-    const jsStr = `window._iconfont_svg_string_3201924 = '<svg>${ svgStr}</svg>', function (n) { var t = (t = document.getElementsByTagName("script"))[t.length - 1], e = t.getAttribute("data-injectcss"), t = t.getAttribute("data-disable-injectsvg"); if (!t) { var o, i, a, d, c, s = function (t, e) { e.parentNode.insertBefore(t, e) }; if (e && !n.__iconfont__svg__cssinject__) { n.__iconfont__svg__cssinject__ = !0; try { document.write("<style>.svgfont {display: inline-block;width: 1em;height: 1em;fill: currentColor;vertical-align: -0.1em;font-size:16px;}</style>") } catch (t) { console && console.log(t) } } o = function () { var t, e = document.createElement("div"); e.innerHTML = n._iconfont_svg_string_3201924, (e = e.getElementsByTagName("svg")[0]) && (e.setAttribute("aria-hidden", "true"), e.style.position = "absolute", e.style.width = 0, e.style.height = 0, e.style.overflow = "hidden", e = e, (t = document.body).firstChild ? s(e, t.firstChild) : t.appendChild(e)) }, document.addEventListener ? ~["complete", "loaded", "interactive"].indexOf(document.readyState) ? setTimeout(o, 0) : (i = function () { document.removeEventListener("DOMContentLoaded", i, !1), o() }, document.addEventListener("DOMContentLoaded", i, !1)) : document.attachEvent && (a = o, d = n.document, c = !1, r(), d.onreadystatechange = function () { "complete" == d.readyState && (d.onreadystatechange = null, l()) }) } function l() { c || (c = !0, a()) } function r() { try { d.documentElement.doScroll("left") } catch (t) { return void setTimeout(r, 50) } l() } }(window);`
-    const hash = crypto.createHash('md5')
-    const digest = hash.update(svgStr).digest('hex')
-    const fileName = `font_symbol_${ digest }.js`
+    const svgStr = icons
+      .map(
+        icon =>
+          `<symbol id="${icon.fontClass}" viewBox="0 0 1024 1024">` +
+          icon.showSvg.replace(/<svg.*?>|<\/svg>/g, "") +
+          "</symbol>"
+      )
+      .join("");
+    const jsStr = `window._iconfont_svg_string_3201924 = '<svg>${svgStr}</svg>', function (n) { var t = (t = document.getElementsByTagName("script"))[t.length - 1], e = t.getAttribute("data-injectcss"), t = t.getAttribute("data-disable-injectsvg"); if (!t) { var o, i, a, d, c, s = function (t, e) { e.parentNode.insertBefore(t, e) }; if (e && !n.__iconfont__svg__cssinject__) { n.__iconfont__svg__cssinject__ = !0; try { document.write("<style>.svgfont {display: inline-block;width: 1em;height: 1em;fill: currentColor;vertical-align: -0.1em;font-size:16px;}</style>") } catch (t) { console && console.log(t) } } o = function () { var t, e = document.createElement("div"); e.innerHTML = n._iconfont_svg_string_3201924, (e = e.getElementsByTagName("svg")[0]) && (e.setAttribute("aria-hidden", "true"), e.style.position = "absolute", e.style.width = 0, e.style.height = 0, e.style.overflow = "hidden", e = e, (t = document.body).firstChild ? s(e, t.firstChild) : t.appendChild(e)) }, document.addEventListener ? ~["complete", "loaded", "interactive"].indexOf(document.readyState) ? setTimeout(o, 0) : (i = function () { document.removeEventListener("DOMContentLoaded", i, !1), o() }, document.addEventListener("DOMContentLoaded", i, !1)) : document.attachEvent && (a = o, d = n.document, c = !1, r(), d.onreadystatechange = function () { "complete" == d.readyState && (d.onreadystatechange = null, l()) }) } function l() { c || (c = !0, a()) } function r() { try { d.documentElement.doScroll("left") } catch (t) { return void setTimeout(r, 50) } l() } }(window);`;
+    const hash = crypto.createHash("md5");
+    const digest = hash.update(svgStr).digest("hex");
+    const fileName = `font_symbol_${digest}.js`;
 
     // 写入带 hash 的 symbol 文件（保留原行为）
     fs.writeFileSync(path.join(targetDir, fileName), jsStr);
 
     // 额外写入固定名的 `iconfont.js` 以便稳定引用，避免每次文件名不同带来的引用问题
     try {
-      fs.writeFileSync(path.join(targetDir, 'iconfont.js'), jsStr);
+      fs.writeFileSync(path.join(targetDir, "iconfont.js"), jsStr);
     } catch (e) {
-      console.error('写入 iconfont.js 失败', e);
+      console.error("写入 iconfont.js 失败", e);
     }
 
     // 写入 iconfont.json，包含元信息（file/hash/时间）
     try {
       const meta = {
-        type: 'symbol',
+        type: "symbol",
         file: fileName,
-        alias: 'iconfont.js',
+        alias: "iconfont.js",
         hash: digest,
-        generatedAt: Date.now()
+        generatedAt: Date.now(),
       };
-      fs.writeFileSync(path.join(targetDir, 'iconfont.json'), JSON.stringify(meta, null, 2));
+      fs.writeFileSync(
+        path.join(targetDir, "iconfont.json"),
+        JSON.stringify(meta, null, 2)
+      );
     } catch (e) {
-      console.error('写入 iconfont.json 失败', e);
+      console.error("写入 iconfont.json 失败", e);
     }
 
-    return fileName
+    return fileName;
   }
-  
+
   // 生成workspace list
   private generateWorkSpaceList() {
-    const hasCurrentWs = this.workspaceList.find(item => item.active)
+    const hasCurrentWs = this.workspaceList.find(item => item.active);
     this.workspaceList = [];
     const wsList = workspace.workspaceFolders || [];
-    const getConfig = workspace.getConfiguration("iconfont",undefined);
-    this.currentTextDocumentFileUri = window.activeTextEditor?.document.uri
-    const config: ConfigType = {
-      projectUrl:'',
-      transionMethod: getConfig.get('transionMethod') || 'svg',
-      transionSvgDir: String(getConfig.get('transionSvgDir')).replace('\\', '/') || '',
-      transionFontClassDir: String(getConfig.get('transionFontClassDir')).replace('\\', '/') || '',
-      transionSymbolJsDir: String( getConfig.get('transionSymbolJsDir')).replace('\\', '/') || '',
-      symbolJsWiteTemplateDir: String(getConfig.get('symbolJsWiteTemplateDir')).replace('\\', '/') || 'false',
-      projectName: ''
-    };
-    wsList.map((item,index) => {
-      // 获取根目录下的配置文件
-      const configJsondir = item.uri.fsPath + '/.iconfont.json';
-      let realConfig = {...config};
-      if (fs.existsSync(configJsondir)) {
-        const configJsonfile = fs.readFileSync(configJsondir, 'utf8');
-        realConfig = Object.assign({}, config, JSON.parse(configJsonfile));
-      }
+    this.currentTextDocumentFileUri = window.activeTextEditor?.document.uri;
+
+    wsList.map((item, index) => {
+      // Use ConfigurationManager to get config for this workspace folder
+      const realConfig = ConfigurationManager.getConfig(item.uri);
+
       if (!hasCurrentWs) {
         // 当前光标所在文件即为默认选项
-        if (this.currentTextDocumentFileUri && this.currentTextDocumentFileUri.path.indexOf(item.uri.fsPath) > -1) {
+        if (
+          this.currentTextDocumentFileUri &&
+          this.currentTextDocumentFileUri.path.indexOf(item.uri.fsPath) > -1
+        ) {
           realConfig.active = true;
         }
         // 如果没有打开的项目,默认选中第一个项目
@@ -248,132 +297,296 @@ export class VueIconfontHelper {
       } else if (hasCurrentWs.projectUrl === item.uri.fsPath) {
         realConfig.active = true;
       }
-      const splitStr = system === 'win' ? item.uri.fsPath.split('\\') : item.uri.fsPath.split('/');
-      realConfig.projectUrl = item.uri.fsPath
-      realConfig.projectName = splitStr.slice(-1)[0];
-      realConfig.transionSvgDir = path.join(item.uri.fsPath, realConfig.transionSvgDir) ;
-      realConfig.transionFontClassDir = path.join(item.uri.fsPath, realConfig.transionFontClassDir);
-      realConfig.transionSymbolJsDir = path.join(item.uri.fsPath, realConfig.transionSymbolJsDir);
-      realConfig.symbolJsWiteTemplateDir = path.join(item.uri.fsPath, realConfig.symbolJsWiteTemplateDir);
+
+      realConfig.transionSvgDir = path.join(
+        item.uri.fsPath,
+        realConfig.transionSvgDir
+      );
+      realConfig.transionFontClassDir = path.join(
+        item.uri.fsPath,
+        realConfig.transionFontClassDir
+      );
+      realConfig.transionSymbolJsDir = path.join(
+        item.uri.fsPath,
+        realConfig.transionSymbolJsDir
+      );
+      realConfig.symbolJsWiteTemplateDir = path.join(
+        item.uri.fsPath,
+        realConfig.symbolJsWiteTemplateDir
+      );
       this.workspaceList.push(realConfig);
     });
     setTimeout(() => {
-      this.webviewPanel?.webview?.postMessage({ type: 'wslist', data: this.workspaceList });
+      this.webviewPanel?.webview?.postMessage({
+        type: "wslist",
+        data: this.workspaceList,
+      });
     }, 1000);
   }
   // 监控html页面postmessage
   private async didReceiveMessage(e: EventMessage) {
     const { type, data } = e;
     console.log(type, data);
-    switch(type){
-      case 'refresh':
+    switch (type) {
+      case "refresh":
         // 刷新
-        this.localIcons = await vueService.getProjectIcons(this.currentActiveProject, true); // 获取项目icons
-        this.webviewPanel?.webview?.postMessage({type:'projectIcons',data:this.localIcons});
+        this.localIcons = await vueService.getProjectIcons(
+          this.currentActiveProject,
+          true
+        ); // 获取项目icons
+        this.webviewPanel?.webview?.postMessage({
+          type: "projectIcons",
+          data: this.localIcons,
+        });
         break;
-      case 'search':
+      case "search":
         //iconfont的全局搜索
-        const { icons, pages } = await vueService.searchGlobalIcons({ t: data.searchValue, page: data.page });
+        const { icons, pages } = await vueService.searchGlobalIcons({
+          t: data.searchValue,
+          page: data.page,
+        });
         this.searchIcons = icons;
-        this.webviewPanel?.webview?.postMessage({type:'iconsSearch',data:icons,pages});
+        this.webviewPanel?.webview?.postMessage({
+          type: "iconsSearch",
+          data: icons,
+          pages,
+        });
         break;
-      case 'delete':
+      case "delete":
         //项目中icon的删除
-        await vueService.deleteIconFromProject(this.currentActiveProject,data as unknown as string|number);
+        await vueService.deleteIconFromProject(
+          this.currentActiveProject,
+          data as unknown as string | number
+        );
         // 刷新
-        this.localIcons = await vueService.getProjectIcons(this.currentActiveProject, true); // 获取项目icons
-        this.webviewPanel?.webview?.postMessage({type:'projectIcons',data:this.localIcons});
+        this.localIcons = await vueService.getProjectIcons(
+          this.currentActiveProject,
+          true
+        ); // 获取项目icons
+        this.webviewPanel?.webview?.postMessage({
+          type: "projectIcons",
+          data: this.localIcons,
+        });
         break;
-      case 'add':
+      case "add":
         // 添加图标
-        await vueService.insertIconToProject(this.currentActiveProject,data as unknown as string|number);
+        await vueService.insertIconToProject(
+          this.currentActiveProject,
+          data as unknown as string | number
+        );
         // 刷新
-        this.localIcons = await vueService.getProjectIcons(this.currentActiveProject, true); // 获取项目icons
-        this.webviewPanel?.webview?.postMessage({type:'projectIcons',data:this.localIcons});
+        this.localIcons = await vueService.getProjectIcons(
+          this.currentActiveProject,
+          true
+        ); // 获取项目icons
+        this.webviewPanel?.webview?.postMessage({
+          type: "projectIcons",
+          data: this.localIcons,
+        });
         break;
-      case 'transition':
+      case "transition":
         // 传输至本地项目中
         await this.transionIconsToProject(data as any);
-      case 'select':
-        data&&this.workspaceList.map(item => {
-          item.active = item.projectName === String(data) ? true : false;
-          return item;
-        });
+      case "select":
+        data &&
+          this.workspaceList.map(item => {
+            item.active = item.projectName === String(data) ? true : false;
+            return item;
+          });
+        break;
+      case "info":
+        window.showInformationMessage(data as unknown as string);
+        break;
+      case "error":
+        window.showErrorMessage(data as unknown as string);
+        break;
+    }
+  }
+  private async downloadFontClassByFilesStrategy(targetDir: string) {
+    const projectDetail = await vueService.getIconProjectDetail(
+      this.currentActiveProject
+    );
+
+    if (!projectDetail) {
+      window.showErrorMessage("无法获取项目详情，请检查网络或Cookie配置。");
+      return;
+    }
+
+    // 确保目标目录存在
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    const fontData = projectDetail.font;
+    const tasks: Promise<void>[] = [];
+
+    // 1. 下载字体和JS文件
+    // 映射 API 字段到本地文件名
+    const fileMapping: Record<string, string> = {
+      js_file: "iconfont.js",
+      eot_file: "iconfont.eot",
+      woff_file: "iconfont.woff",
+      woff2_file: "iconfont.woff2",
+      ttf_file: "iconfont.ttf",
+      svg_file: "iconfont.svg",
+    };
+
+    Object.entries(fileMapping).forEach(([key, fileName]) => {
+      const url = fontData[key];
+      if (url) {
+        tasks.push(this.downloadAndSave(url, path.join(targetDir, fileName)));
+      }
+    });
+
+    // 2. 处理 CSS 文件
+    const cssUrl = fontData.css_file || projectDetail.project.font_resource;
+    if (cssUrl) {
+      tasks.push(this.processCss(cssUrl, targetDir));
+
+      // 3. 尝试下载 iconfont.json
+      const jsonUrl = cssUrl.replace(/\.css(\?.*)?$/, ".json");
+      tasks.push(
+        this.downloadAndSave(
+          jsonUrl,
+          path.join(targetDir, "iconfont.json"),
+          true
+        )
+      );
+    } else {
+      window.showErrorMessage("未找到 CSS 文件链接");
+    }
+
+    try {
+      await Promise.all(tasks);
+    } catch (e) {
+      console.error("部分文件下载失败", e);
+      window.showErrorMessage("部分文件下载失败，请查看控制台日志");
     }
   }
 
   private async downloadFontClass(targetDir: string) {
-    const projectDetail = await vueService.getIconProjectDetail(this.currentActiveProject);
-    // 尝试获取CSS链接
-    let cssUrl = projectDetail?.font?.css_file;
-    if (!cssUrl && projectDetail?.project?.font_resource) {
-        cssUrl = projectDetail.project.font_resource;
-    }
-    
-    if (!cssUrl) {
-        window.showErrorMessage('无法找到项目的CSS文件链接，请确认项目是否生成了Font Class代码。');
-        return;
+    const projectDetail = await vueService.getIconProjectDetail(
+      this.currentActiveProject
+    );
+
+    if (!projectDetail) {
+      window.showErrorMessage("无法获取项目详情，请检查网络或Cookie配置。");
+      return;
     }
 
-    // 下载CSS
-    let cssContentBuffer = await vueService.downloadFile(cssUrl);
-    let cssContent = cssContentBuffer.toString('utf8');
-
-    // 解析并下载字体文件
-    const fontRegex = /url\('(.+?)(\?.*?)?'\)/g;
-    const fontFiles = new Map<string, string>();
-    
-    // 替换CSS中的路径为相对路径
-    let newCssContent = cssContent.replace(fontRegex, (fullMatch: string, url: string, query: string) => {
-        let downloadUrl = url;
-        if (downloadUrl.startsWith('//')) {
-            downloadUrl = 'https:' + downloadUrl;
-        }
-        
-        const ext = path.extname(url);
-        const fileName = `iconfont${ext}`;
-        fontFiles.set(downloadUrl, fileName);
-        
-        return `url('${fileName}${query || ''}')`;
-    });
-
-    // 写入CSS文件
+    // 确保目标目录存在
     if (!fs.existsSync(targetDir)) {
-        fs.mkdirSync(targetDir, { recursive: true });
-    }
-    fs.writeFileSync(path.join(targetDir, 'iconfont.css'), newCssContent);
-
-    // 下载并写入字体文件
-    for (const [fileUrl, fileName] of fontFiles) {
-        try {
-            const fileContent = await vueService.downloadFile(fileUrl);
-            fs.writeFileSync(path.join(targetDir, fileName), fileContent);
-        } catch (e) {
-            console.error(`下载字体文件失败: ${fileUrl}`, e);
-        }
+      fs.mkdirSync(targetDir, { recursive: true });
     }
 
-    // 下载 JS 文件
-    let jsUrl = projectDetail?.font?.js_file;
-    if (jsUrl) {
-        try {
-            const jsContent = await vueService.downloadFile(jsUrl);
-            fs.writeFileSync(path.join(targetDir, 'iconfont.js'), jsContent);
-        } catch (e) {
-            console.error(`下载 JS 文件失败: ${jsUrl}`, e);
-        }
-    }
+    // 获取 ctoken
+    const config = ConfigurationManager.getConfig(
+      this.currentTextDocumentFileUri || workspace.workspaceFolders![0].uri
+    );
+    const cookie = config.cookie || "";
+    const ctoken = getCookieConfig(cookie, "ctoken");
 
-    // 写入 font-class 模式的元信息到 iconfont.json（包含字体文件列表与时间戳）
+    // 构造下载 URL
+    const downloadUrl = `https://www.iconfont.cn/api/project/download.zip?pid=${this.currentActiveProject}&ctoken=${ctoken}`;
+
     try {
-      const meta = {
-        type: 'font-class',
-        files: Array.from(new Set(Array.from(fontFiles.values()))),
-        generatedAt: Date.now()
-      };
-      fs.writeFileSync(path.join(targetDir, 'iconfont.json'), JSON.stringify(meta, null, 2));
+      // 下载 ZIP
+      const zipBuffer = await vueService.downloadFile(downloadUrl);
+      const zip = new AdmZip(zipBuffer);
+      const zipEntries = zip.getEntries();
+
+      // 处理解压文件
+      // ZIP 结构通常是: download.zip -> font_xxxx/ -> files
+      // 我们需要把 files 提取出来，并重命名
+
+      // 1. 找到 CSS 文件，用于后续替换引用
+      const cssEntry = zipEntries.find(
+        (entry: AdmZip.IZipEntry) =>
+          !entry.isDirectory && entry.entryName.endsWith(".css")
+      );
+
+      if (!cssEntry) {
+        throw new Error("压缩包中未找到 CSS 文件");
+      }
+
+      // 2. 遍历所有文件进行处理
+      for (const entry of zipEntries) {
+        if (entry.isDirectory) {
+          continue;
+        }
+
+        const ext = path.extname(entry.name).toLowerCase();
+        let targetFileName = entry.name; // 默认保持原名
+        let content = entry.getData();
+
+        // 根据扩展名重命名
+        if (ext === ".css") {
+          targetFileName = "iconfont.css";
+          // 处理 CSS 内容：替换引用
+          let cssText = content.toString("utf8");
+          cssText = cssText.replace(
+            /url\('?(.+?)(\?.*?)?'?\)/g,
+            (match: string, url: string, query: string) => {
+              // url 可能是 "iconfont.woff2" 或 "font_xxx.woff2"
+              // 我们统一替换为 "iconfont.ext"
+              const fileExt = path.extname(url);
+              return `url('iconfont${fileExt}${query || ""}')`;
+            }
+          );
+          content = Buffer.from(cssText, "utf8");
+        } else if (ext === ".js") {
+          targetFileName = "iconfont.js";
+        } else if (ext === ".json") {
+          targetFileName = "iconfont.json";
+        } else if ([".eot", ".woff", ".woff2", ".ttf", ".svg"].includes(ext)) {
+          targetFileName = `iconfont${ext}`;
+        }
+
+        // 写入文件
+        fs.writeFileSync(path.join(targetDir, targetFileName), content as any);
+      }
+
+      window.showInformationMessage("下载并解压完成");
     } catch (e) {
-      console.error('写入 iconfont.json 失败', e);
+      console.error("下载或解压失败", e);
+      window.showErrorMessage(`下载或解压失败: ${e}`);
+    }
+  }
+
+  private async downloadAndSave(
+    url: string,
+    filePath: string,
+    ignoreError = false
+  ) {
+    try {
+      const content = await vueService.downloadFile(url);
+      fs.writeFileSync(filePath, content);
+    } catch (e) {
+      if (!ignoreError) {
+        console.error(`下载失败: ${url}`, e);
+        throw e;
+      } else {
+        console.warn(`可选文件下载失败: ${url}`);
+      }
+    }
+  }
+
+  private async processCss(url: string, targetDir: string) {
+    try {
+      const content = await vueService.downloadFile(url);
+      let cssContent = content.toString("utf8");
+      // 替换远程路径为本地路径，保留 query 参数
+      cssContent = cssContent.replace(
+        /url\('(.+?)(\?.*?)?'\)/g,
+        (match: string, url: string, query: string) => {
+          const ext = path.extname(url);
+          return `url('iconfont${ext}${query || ""}')`;
+        }
+      );
+      fs.writeFileSync(path.join(targetDir, "iconfont.css"), cssContent);
+    } catch (e) {
+      console.error(`处理 CSS 失败: ${url}`, e);
+      throw e;
     }
   }
 }

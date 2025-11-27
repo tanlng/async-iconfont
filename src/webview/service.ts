@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import * as vscode from 'vscode';
 import { window } from 'vscode';
-import { Icon } from '../interface';
+import { Icon, ProjectDetail } from '../interface';
 import { getCookieConfig, toAwait } from '../utils';
 export class VueService {
   request: AxiosInstance | undefined;
@@ -60,7 +60,7 @@ export class VueService {
   }
   
   // 获取项目详情
-  public async getIconProjectDetail(id: string) {
+  public async getIconProjectDetail(id: string): Promise<ProjectDetail | null> {
     const iconJsonState = this.context!.globalState.get('iconJsonState');
     // 优先使用 service 中已设置的 cookie (可能来自 .iconfont.json)，否则回退到配置
     const cookie = this.cookie || vscode.workspace.getConfiguration().get('iconfont.cookie') as string;
@@ -69,13 +69,13 @@ export class VueService {
     );
     if (error) {
       window.showErrorMessage('获取项目信息出错!');
-      return [];
+      return null;
     }
     // 顺便更新state
     const json = iconJsonState && JSON.parse(String(iconJsonState)) ||{ };
     json[id] = data;
     this.context!.globalState.update('iconJsonState', JSON.stringify(json));
-    return data;
+    return data as ProjectDetail;
   }
   // 获取项目内icons列表
   public async getProjectIcons(pid: string, refresh?: boolean): Promise<Icon[]> {
@@ -84,6 +84,9 @@ export class VueService {
     if (refresh || !iconsData) {
       iconsData = await this.getIconProjectDetail(pid);
      }
+    if (!iconsData) {
+       return [];
+    }
     const icons = iconsData.icons.map((item: any) => ({
       id: String(item.id),
       name: item.name,

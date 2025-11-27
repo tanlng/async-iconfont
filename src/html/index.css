@@ -405,3 +405,18 @@ input:focus {
 .testswitch-checkbox:checked+.testswitch-label .testswitch-switch {
     right: 0px;
 }
+
+.copy-btn {
+    cursor: pointer;
+    padding: 4px 8px;
+    background: #1890ff;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 12px;
+    margin: 0 4px;
+    display: inline-block;
+}
+
+.copy-btn:hover {
+    opacity: 0.8;
+}
