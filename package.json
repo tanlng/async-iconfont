@@ -2,7 +2,7 @@
 	"name": "sc-async-iconfont",
 	"displayName": "sc-async-iconfont",
 	"description": "使用插件一键传输iconfont官网icon到项目中",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"engines": {
 		"vscode": "^1.90.0"
 	},
