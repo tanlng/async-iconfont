@@ -1,161 +1,162 @@
 {
-	"name": "sc-async-iconfont",
-	"displayName": "sc-async-iconfont",
-	"description": "使用插件一键传输iconfont官网icon到项目中",
-	"version": "0.0.5",
-	"engines": {
-		"vscode": "^1.90.0"
-	},
-	"publisher": "forever-chen",
-	"categories": [
-		"Other"
-	],
-	"keywords": [
-		"iconfont",
-		"图标"
-	],
-	"repository": {
-		"url": "https://github.com/forever-chen/async-iconfont"
-	},
-	"bugs": {
-		"url": "https://github.com/forever-chen/async-iconfont/issues"
-	},
-	"icon": "iconfont.webp",
-	"activationEvents": [],
-	"main": "./out/extension.js",
-	"contributes": {
-		"chatParticipants": [
-			{
-				"id": "claude-code",
-				"name": "claude-code",
-				"description": "Claude Code Assistant",
-				"isSticky": true
-			}
-		],
-		"commands": [
-			{
-				"command": "sc-async-iconfont.refresh",
-				"title": "从iconfont官网全量同步icons",
-				"icon": {
-					"light": "out/src/html/refresh.svg",
-					"dark": "out/src/html/refresh.svg"
-				}
-			}
-		],
-		"menus": {
-			"view/title": [
-				{
-					"command": "sc-async-iconfont.refresh",
-					"when": "view == sc-async-iconfont",
-					"group": "navigation"
-				}
-			]
-		},
-		"views": {
-			"explorer": [
-				{
-					"id": "sc-async-iconfont",
-					"name": "sc-async-iconfont"
-				}
-			]
-		},
-		"viewsWelcome": [
-			{
-				"view": "sc-async-iconfont",
-				"contents": "正在加载项目列表……请稍等"
-			}
-		],
-		"configuration": [
-			{
-				"title": "sc-async-iconfont",
-				"properties": {
-					"iconfont.cookie": {
-						"type": "string",
-						"description": "cookie"
-					},
-					"iconfont.transionMethod": {
-						"type": "string",
-						"enum": [
-							"svg",
-							"symbol",
-							"font-class"
-						],
-						"default": "svg",
-						"description": "icons 传输到本地的方式，有svg文件的形式、symbol的形式、font-class的形式。"
-					},
-					"iconfont.transionSvgDir": {
-						"type": "string",
-						"description": "传输svg文件到项目中的位置。",
-						"default": "src/assets/icons"
-					},
-					"iconfont.transionFontClassDir": {
-						"type": "string",
-						"description": "传输font-class文件(css和字体文件)到项目中的位置。",
-						"default": "src/assets/fonts"
-					},
-					"iconfont.transionSymbolJsDir": {
-						"type": "string",
-						"description": "传输symbol的js文件到项目中的位置。",
-						"default": "public"
-					},
-					"iconfont.symbolJsWiteTemplateDir": {
-						"type": "string",
-						"default": "index.html",
-						"description": "把symbol js文件写入到模版中，可以不写，不写的话就自己手动处理添加script标签；不过只要项目中icons发生变化，js文件的hash值都会变化，所以传输时记得需要更新模版文件中的js文件名。"
-					}
-				}
-			}
-		]
-	},
-	"scripts": {
-		"compile": "rm -rf ./out&& mkdir ./out && mkdir ./out/src && cp -R ./src/html ./out/src/",
-		"compile:win": "rd /s /q out && mkdir out && mkdir out\\src && xcopy /E src\\html out\\src\\html\\",
-		"watch": "tsc -watch -p ./",
-		"pretest": "npm run compile && npm run lint",
-		"lint": "eslint src --ext ts",
-		"test": "node ./out/test/runTest.js",
-		"vscode:prepublish": "npm run compile:win && npm run esbuild-base -- --minify",
-		"esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
-		"esbuild": "npm run esbuild-base -- --sourcemap",
-		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
-		"test-compile": "tsc -p ./"
-	},
-	"devDependencies": {
-		"@types/babel__core": "^7.20.0",
-		"@types/ejs": "^3.1.2",
-		"@types/glob": "^7.2.0",
-		"@types/mocha": "^9.1.0",
-		"@types/node": "~18.15.11",
-		"@types/prettier": "^2.7.2",
-		"@types/react": "^18.0.34",
-		"@types/react-dom": "^18.0.11",
-		"@types/vscode": "^1.90.0",
-		"@typescript-eslint/eslint-plugin": "^5.12.1",
-		"@typescript-eslint/parser": "^5.12.1",
-		"@vscode/test-electron": "^2.1.2",
-		"eslint": "^8.9.0",
-		"glob": "^7.2.0",
-		"mocha": "^9.2.1",
-		"typescript": "^5.0.4"
-	},
-	"dependencies": {
-		"@babel/core": "^7.21.4",
-		"@babel/generator": "^7.21.4",
-		"@babel/parser": "^7.21.4",
-		"@babel/preset-react": "^7.18.6",
-		"@babel/traverse": "^7.21.4",
-		"@babel/types": "^7.21.4",
-		"@types/babel__generator": "^7.6.4",
-		"@types/babel__traverse": "^7.18.3",
-		"@vue/compiler-dom": "^3.2.47",
-		"axios": "^1.3.5",
-		"babel-plugin-jsx": "^1.2.0",
-		"ejs": "^3.1.9",
-		"esbuild": "^0.17.16",
-		"prettier": "^2.8.7",
-		"react": "^18.2.0",
-		"react-dom": "^18.2.0",
-		"tough-cookie": "^4.1.3"
-	},
-	"license": "MIT"
+  "name": "sc-async-iconfont",
+  "displayName": "sc-async-iconfont",
+  "description": "使用插件一键传输iconfont官网icon到项目中",
+  "version": "0.0.5",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "publisher": "forever-chen",
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "iconfont",
+    "图标"
+  ],
+  "repository": {
+    "url": "https://github.com/forever-chen/async-iconfont"
+  },
+  "bugs": {
+    "url": "https://github.com/forever-chen/async-iconfont/issues"
+  },
+  "icon": "iconfont.webp",
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "claude-code",
+        "name": "claude-code",
+        "description": "Claude Code Assistant",
+        "isSticky": true
+      }
+    ],
+    "commands": [
+      {
+        "command": "sc-async-iconfont.refresh",
+        "title": "从iconfont官网全量同步icons",
+        "icon": {
+          "light": "out/src/html/refresh.svg",
+          "dark": "out/src/html/refresh.svg"
+        }
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "sc-async-iconfont.refresh",
+          "when": "view == sc-async-iconfont",
+          "group": "navigation"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "sc-async-iconfont",
+          "name": "sc-async-iconfont"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "sc-async-iconfont",
+        "contents": "正在加载项目列表……请稍等"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "sc-async-iconfont",
+        "properties": {
+          "iconfont.cookie": {
+            "type": "string",
+            "description": "cookie"
+          },
+          "iconfont.transionMethod": {
+            "type": "string",
+            "enum": [
+              "svg",
+              "symbol",
+              "font-class"
+            ],
+            "default": "svg",
+            "description": "icons 传输到本地的方式，有svg文件的形式、symbol的形式、font-class的形式。"
+          },
+          "iconfont.transionSvgDir": {
+            "type": "string",
+            "description": "传输svg文件到项目中的位置。",
+            "default": "src/assets/icons"
+          },
+          "iconfont.transionFontClassDir": {
+            "type": "string",
+            "description": "传输font-class文件(css和字体文件)到项目中的位置。",
+            "default": "src/assets/fonts"
+          },
+          "iconfont.transionSymbolJsDir": {
+            "type": "string",
+            "description": "传输symbol的js文件到项目中的位置。",
+            "default": "public"
+          },
+          "iconfont.symbolJsWiteTemplateDir": {
+            "type": "string",
+            "default": "index.html",
+            "description": "把symbol js文件写入到模版中，可以不写，不写的话就自己手动处理添加script标签；不过只要项目中icons发生变化，js文件的hash值都会变化，所以传输时记得需要更新模版文件中的js文件名。"
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "package": "npm version patch && npm run compile:win && npm run esbuild -- --minify && vsce package",
+    "compile": "rm -rf ./out&& mkdir ./out && mkdir ./out/src && cp -R ./src/html ./out/src/",
+    "compile:win": "rd /s /q out && mkdir out && mkdir out\\src && xcopy /E src\\html out\\src\\html\\",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "vscode:prepublish": "npm run compile:win && npm run esbuild-base -- --minify",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "esbuild": "npm run esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+    "test-compile": "tsc -p ./"
+  },
+  "devDependencies": {
+    "@types/babel__core": "^7.20.0",
+    "@types/ejs": "^3.1.2",
+    "@types/glob": "^7.2.0",
+    "@types/mocha": "^9.1.0",
+    "@types/node": "~18.15.11",
+    "@types/prettier": "^2.7.2",
+    "@types/react": "^18.0.34",
+    "@types/react-dom": "^18.0.11",
+    "@types/vscode": "^1.90.0",
+    "@typescript-eslint/eslint-plugin": "^5.12.1",
+    "@typescript-eslint/parser": "^5.12.1",
+    "@vscode/test-electron": "^2.1.2",
+    "eslint": "^8.9.0",
+    "glob": "^7.2.0",
+    "mocha": "^9.2.1",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@babel/core": "^7.21.4",
+    "@babel/generator": "^7.21.4",
+    "@babel/parser": "^7.21.4",
+    "@babel/preset-react": "^7.18.6",
+    "@babel/traverse": "^7.21.4",
+    "@babel/types": "^7.21.4",
+    "@types/babel__generator": "^7.6.4",
+    "@types/babel__traverse": "^7.18.3",
+    "@vue/compiler-dom": "^3.2.47",
+    "axios": "^1.3.5",
+    "babel-plugin-jsx": "^1.2.0",
+    "ejs": "^3.1.9",
+    "esbuild": "^0.17.16",
+    "prettier": "^2.8.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tough-cookie": "^4.1.3"
+  },
+  "license": "MIT"
 }
