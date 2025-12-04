@@ -519,31 +519,31 @@ export class VueIconfontHelper {
         let targetFileName = entry.name; // 默认保持原名
         let content = entry.getData();
 
-        // 根据扩展名重命名
-        if (ext === ".css") {
-          targetFileName = "iconfont.css";
-          // 处理 CSS 内容：替换引用
-          let cssText = content.toString("utf8");
-          cssText = cssText.replace(
-            /url\('?(.+?)(\?.*?)?'?\)/g,
-            (match: string, url: string, query: string) => {
-              // url 可能是 "iconfont.woff2" 或 "font_xxx.woff2"
-              // 我们统一替换为 "iconfont.ext"
-              const fileExt = path.extname(url);
-              return `url('iconfont${fileExt}${query || ""}')`;
-            }
-          );
-          content = Buffer.from(cssText, "utf8");
-        } else if (ext === ".js") {
-          targetFileName = "iconfont.js";
-        } else if (ext === ".json") {
-          targetFileName = "iconfont.json";
-        } else if ([".eot", ".woff", ".woff2", ".ttf", ".svg"].includes(ext)) {
-          targetFileName = `iconfont${ext}`;
-        }
+        // // 根据扩展名重命名
+        // if (ext === ".css") {
+        //   targetFileName = "iconfont.css";
+        //   // 处理 CSS 内容：替换引用
+        //   let cssText = content.toString("utf8");
+        //   cssText = cssText.replace(
+        //     /url\('?(.+?)(\?.*?)?'?\)/g,
+        //     (match: string, url: string, query: string) => {
+        //       // url 可能是 "iconfont.woff2" 或 "font_xxx.woff2"
+        //       // 我们统一替换为 "iconfont.ext"
+        //       const fileExt = path.extname(url);
+        //       return `url('iconfont${fileExt}${query || ""}')`;
+        //     }
+        //   );
+        //   content = Buffer.from(cssText, "utf8");
+        // } else if (ext === ".js") {
+        //   targetFileName = "iconfont.js";
+        // } else if (ext === ".json") {
+        //   targetFileName = "iconfont.json";
+        // } else if ([".eot", ".woff", ".woff2", ".ttf", ".svg"].includes(ext)) {
+        //   targetFileName = `iconfont${ext}`;
+        // }
 
         // 写入文件
-        fs.writeFileSync(path.join(targetDir, targetFileName), content as any);
+        fs.writeFileSync(path.join(targetDir, entry.name), content as any);
       }
 
       window.showInformationMessage("下载并解压完成");
