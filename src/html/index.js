@@ -283,8 +283,8 @@ function renderList(icons) {
       if (isProjectIcons) {
         if (isFontClass) {
           operations = `
-          <span class="copy-btn" data-copy="iconfont ${item.fontClass}">复制Class</span>
-          <span class="copy-btn" data-copy='<ScIcon iconClass="iconfont ${item.fontClass}" />'>复制代码</span>
+          <span class="copy-btn" data-copy="iconfont icon-${item.fontClass}">复制Class</span>
+          <span class="copy-btn" data-copy='<ScIcon iconClass="iconfont icon-${item.fontClass}" />'>复制代码</span>
         `;
         } else {
           operations = `
