@@ -13,7 +13,8 @@ import * as crypto from "crypto";
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
-import * as AdmZip from "adm-zip";
+// 使用 require 导入 adm-zip 以兼容 esbuild 打包和 CommonJS 模块导出
+import AdmZip = require("adm-zip");
 import { getIndexHtml, getLoadingHtml, getCookieConfig } from "../utils";
 import { vueService } from "./service";
 import { EventData, EventMessage, Icon, ConfigType } from "../interface";
